@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sequoia Monthly Insights Editor</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif; background:#edf0f4; color:#163B4F; }
+
+.how-to-use { background:#0f4c2a; color:#fff; padding:10px 24px; font-size:12px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+.how-to-use strong { color:#86efac; font-size:13px; }
+.steps { display:flex; gap:16px; flex-wrap:wrap; }
+.step { display:flex; align-items:center; gap:6px; }
+.step-num { background:#16a34a; color:#fff; width:18px; height:18px; border-radius:50%; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.pdf-note { background:#1e3a8a; color:#93c5fd; padding:3px 10px; border-radius:3px; font-size:11px; font-weight:600; margin-left:auto; }
+
+.app { display:flex; height:calc(100vh - 44px); overflow:hidden; }
+
+.sidebar { width:400px; flex-shrink:0; background:#163B4F; color:#fff; display:flex; flex-direction:column; overflow:hidden; }
+.sidebar-header { padding:16px 20px 12px; border-bottom:1px solid rgba(255,255,255,0.1); flex-shrink:0; }
+.sidebar-header h1 { font-size:15px; font-weight:700; }
+.sidebar-header p { font-size:11px; color:rgba(255,255,255,0.5); margin-top:2px; }
+
+.sidebar-tabs { display:flex; border-bottom:1px solid rgba(255,255,255,0.1); flex-shrink:0; }
+.tab-btn { flex:1; padding:9px 4px; font-size:10px; font-weight:600; background:none; border:none; color:rgba(255,255,255,0.45); cursor:pointer; letter-spacing:0.4px; text-transform:uppercase; border-bottom:2px solid transparent; transition:all 0.15s; }
+.tab-btn.active { color:#fff; border-bottom-color:#60a5fa; }
+
+.sidebar-body { flex:1; overflow-y:auto; padding:16px 18px 20px; }
+.sidebar-body::-webkit-scrollbar { width:4px; }
+.sidebar-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:2px; }
+
+.field-section-title { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,0.4); padding:10px 0 8px; border-top:1px solid rgba(255,255,255,0.08); margin-top:4px; }
+.field-section-title:first-child { border-top:none; padding-top:0; }
+
+.field-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+.field-row label { font-size:11px; color:rgba(255,255,255,0.7); width:130px; flex-shrink:0; }
+
+input[type=text], textarea {
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15);
+  color:#fff; border-radius:4px; font-size:12px; padding:5px 7px;
+  width:100%; font-family:inherit; line-height:1.4;
+}
+input[type=text]:focus, textarea:focus { outline:none; border-color:#60a5fa; background:rgba(255,255,255,0.15); }
+textarea { resize:vertical; min-height:68px; }
+::placeholder { color:rgba(255,255,255,0.25); }
+
+.img-hint { font-size:10px; color:rgba(255,255,255,0.3); margin-top:3px; font-style:italic; margin-bottom:6px; }
+
+/* Toggle switch */
+.toggle-row { display:flex; align-items:center; gap:10px; margin:8px 0 4px; }
+.toggle-row span { font-size:10px; font-weight:600; color:rgba(255,255,255,0.5); letter-spacing:0.5px; text-transform:uppercase; }
+.toggle { position:relative; width:34px; height:18px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-track { position:absolute; inset:0; background:rgba(255,255,255,0.15); border-radius:18px; cursor:pointer; transition:background 0.2s; }
+.toggle input:checked + .toggle-track { background:#2563eb; }
+.toggle-track:before { content:''; position:absolute; width:12px; height:12px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform 0.2s; }
+.toggle input:checked + .toggle-track:before { transform:translateX(16px); }
+
+.story-card { background:rgba(255,255,255,0.07); border-radius:5px; padding:11px; margin-bottom:10px; }
+.story-card-num { font-size:10px; font-weight:700; color:rgba(255,255,255,0.5); letter-spacing:0.5px; margin-bottom:8px; text-transform:uppercase; }
+.story-field-label { font-size:10px; font-weight:600; color:rgba(255,255,255,0.5); letter-spacing:0.5px; text-transform:uppercase; display:block; margin-bottom:4px; margin-top:8px; }
+.story-field-label:first-of-type { margin-top:0; }
+
+.market-row { background:rgba(255,255,255,0.07); border-radius:5px; padding:10px; margin-bottom:8px; }
+.market-vals { display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; margin-top:6px; }
+.market-val-item { display:flex; flex-direction:column; }
+.market-val-label { font-size:8px; color:rgba(255,255,255,0.4); text-align:center; margin-bottom:2px; letter-spacing:0.3px; text-transform:uppercase; }
+.market-val-item input { font-size:10px; padding:4px 3px; text-align:center; }
+
+.sidebar-actions { padding:12px 18px; border-top:1px solid rgba(255,255,255,0.1); display:flex; gap:6px; flex-shrink:0; }
+.btn-copy { flex:1; padding:10px; background:#2563eb; border:none; color:#fff; font-size:11px; font-weight:700; border-radius:5px; cursor:pointer; transition:background 0.15s; }
+.btn-copy:hover { background:#1d4ed8; }
+.btn-copy.ok { background:#16a34a; }
+.btn-pdf { padding:10px 12px; background:#7c3aed; border:none; color:#fff; font-size:11px; font-weight:600; border-radius:5px; cursor:pointer; }
+.btn-pdf:hover { background:#6d28d9; }
+.btn-dl { padding:10px 12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:12px; font-weight:600; border-radius:5px; cursor:pointer; }
+.btn-dl:hover { background:rgba(255,255,255,0.18); }
+
+.preview-panel { flex:1; overflow:auto; background:#dce3ec; display:flex; flex-direction:column; }
+.preview-bar { background:#fff; border-bottom:1px solid #e2e8f0; padding:8px 20px; display:flex; align-items:center; gap:8px; flex-shrink:0; font-size:12px; color:#64748b; }
+.preview-bar strong { color:#1a2535; }
+.live-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; }
+.preview-scroll { flex:1; padding:20px; display:flex; justify-content:center; overflow:auto; }
+.preview-scroll iframe { width:680px; min-height:900px; border:none; background:#fff; box-shadow:0 4px 24px rgba(0,0,0,0.15); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<div class="how-to-use">
+  <strong>⚡ How to use:</strong>
+  <div class="steps">
+    <div class="step"><span class="step-num">1</span> Edit content on the left</div>
+    <div class="step"><span class="step-num">2</span> Preview updates live on the right</div>
+    <div class="step"><span class="step-num">3</span> <strong style="color:#86efac">Copy HTML</strong> for Mailchimp</div>
+    <div class="step"><span class="step-num">4</span> Or <strong style="color:#c4b5fd">Print as PDF</strong> → Save as PDF</div>
+  </div>
+  <span class="pdf-note">📄 PDF: browser print → Destination → Save as PDF</span>
+</div>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>📄 Monthly Insights Editor</h1>
+      <p>Sequoia Investment Solutions — Monthly Newsletter</p>
+    </div>
+    <div class="sidebar-tabs">
+      <button class="tab-btn active" id="tab-header-btn" onclick="showTab('header')">📅 Header</button>
+      <button class="tab-btn" id="tab-article-btn" onclick="showTab('article')">✍️ Article</button>
+      <button class="tab-btn" id="tab-topics-btn" onclick="showTab('topics')">🗂 Topics</button>
+      <button class="tab-btn" id="tab-market-btn" onclick="showTab('market')">📊 Market</button>
+    </div>
+
+    <!-- HEADER TAB -->
+    <div class="sidebar-body" id="tab-header">
+      <div class="field-section-title">Issue</div>
+      <div class="field-row"><label>Month &amp; Year</label><input type="text" id="h-month" value="February 2026"/></div>
+
+      <div class="field-section-title">Hero Banner</div>
+      <div class="field-row"><label>Hero Heading</label><input type="text" id="h-newsletter-heading" value="NEWSLETTER"/></div>
+      <div class="field-row"><label>Topics Heading</label><input type="text" id="h-topics-heading" value="KEY TOPICS THIS MONTH"/></div>
+      <div class="field-row"><label>Title</label><input type="text" id="h-word1" value="MONTHLY INSIGHTS"/></div>
+
+      <div class="field-section-title">Author</div>
+      <div class="field-row"><label>Name</label><input type="text" id="h-author-name" value="Dr. Chris Harmse"/></div>
+      <span class="story-field-label">Role / Title</span>
+      <input type="text" id="h-author-title" value="Consulting Economist at Sequoia Investment Solutions"/>
+      <span class="story-field-label">Author Photo URL</span>
+      <input type="text" id="h-author-photo" value="https://mcusercontent.com/f4fec8259cbd66fbf9a376f71/images/943caf9f-938a-59e6-d927-8942eb477cf5.jpg"/>
+      <p class="img-hint">Leave blank to hide photo</p>
+    </div>
+
+    <!-- ARTICLE TAB -->
+    <div class="sidebar-body" id="tab-article" style="display:none;">
+      <div id="article-fields"></div>
+    </div>
+
+    <!-- TOPICS TAB -->
+    <div class="sidebar-body" id="tab-topics" style="display:none;">
+      <div id="topic-fields"></div>
+    </div>
+
+    <!-- MARKET TAB -->
+    <div class="sidebar-body" id="tab-market" style="display:none;">
+      <div id="market-fields"></div>
+    </div>
+
+    <div class="sidebar-actions">
+      <button class="btn-copy" id="copyBtn" onclick="copyHTML()">📋 Copy HTML for Mailchimp</button>
+      <button class="btn-pdf" onclick="printAsPDF()">🖨 Print as PDF</button>
+      <button class="btn-dl" onclick="downloadHTML()" title="Download .html">⬇</button>
+    </div>
+  </div>
+
+  <div class="preview-panel">
+    <div class="preview-bar">
+      <div class="live-dot"></div>
+      <strong>Live Preview</strong> — updates as you type
+    </div>
+    <div class="preview-scroll">
+      <iframe id="previewFrame"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+
+var articleSections = [
+  {
+    heading: 'GLOBAL ECONOMIC GROWTH OUTLOOK',
+    body: 'The global economy remains uncertain and becomes more jittery after the new black swan, namely the US and Israel attack on Iran on 28 February. A black swan is an unpredictable event that is beyond what is normally expected of a situation and has potentially severe consequences. Global financial markets took a serious knock within the first two weeks of the attack, as the Brent oil price shot up from $70 per barrel on 27 February to $104 on 12 March 2026.\n\nThe IMF warns that intensified US-Iran conflict threatens the global economic recovery, with rising energy prices potentially increasing global inflation by 40 basis points and reducing output by up to 0.2% for every 10% rise in oil prices. Prolonged conflict risks worsening inflation and hindering economic growth.',
+    showImage: false, imageUrl: '', imageCaption: ''
+  },
+  {
+    heading: 'SOUTH AFRICA',
+    body: "South Africa's economy grew by 1.1% in 2025, marking its strongest expansion in three years following 0.5% growth in 2024. The growth was driven by agriculture, finance, and trade, though it fell short of projections and remains below the population growth rate. The economy recorded its fifth consecutive quarter of growth, expanding by 0.4% in Q4 2025.\n\nSouth Africa's annual consumer price inflation fell to 3.5% in January 2026, down from 3.6% in December 2025. However, the US-Israel/Iran conflict means petrol prices are likely to increase around 30% over the next two months, pushing inflation beyond 4.0% by April. The MPC is expected to keep its repo rate steady at 6.75% at its March 2026 meeting.",
+    showImage: false, imageUrl: '', imageCaption: 'South Africa GDP Growth'
+  },
+  {
+    heading: 'USA',
+    body: "The United States economy is now expected to expand by less than the 2.4% 2026 trend base case. Following the joint US-Israel attacks on Iran from 28 February 2026 and the subsequent effective closure of the Strait of Hormuz, the US economy faces significant headwinds: rising inflation, elevated energy prices, and increased market volatility.\n\nUS nonfarm payrolls unexpectedly dropped by 92,000 in February 2026 — the sharpest decline in four months — missing forecasts of a 59,000 gain. The unemployment rate ticked up to 4.4%. Federal Reserve rate cuts are now pushed back to September or December 2026.",
+    showImage: false, imageUrl: '', imageCaption: ''
+  },
+  {
+    heading: 'EUROPE AND THE UK',
+    body: "Eurozone economic growth prospects face significant uncertainty following US-led attacks on Iran, with risks skewed toward higher inflation and slower growth. The British Chambers of Commerce (BCC) has cut its 2026 UK GDP growth forecast to 1.0%, down from 1.2%. The NIESR warns that if elevated energy prices persist, UK GDP growth could be reduced by a further 0.2 percentage points. Both construction and manufacturing sectors are forecast to contract in 2026.",
+    showImage: false, imageUrl: '', imageCaption: 'Eurozone Economic Outlook'
+  },
+  {
+    heading: 'CHINA AND EMERGING MARKETS',
+    body: "China's economic prospects following the Iran conflict are marked by significant energy price risks and logistical disruptions. The country is insulated by large stockpiles, increased renewable energy, and aggressive industrial tech investment. China may use this crisis to accelerate its energy transition and leverage high-tech exports.\n\nThe economic outlook for emerging economies is marked by heightened volatility. The immediate outlook is dominated by rising energy costs, inflationary pressure, and increased risk premiums. The bullish movement of emerging market equity prices may be over.",
+    showImage: false, imageUrl: '', imageCaption: 'Emerging Markets Outlook'
+  }
+];
+
+// Topic summary cards — 2×2 grid below article
+var topicCards = [
+  { title:'SOUTH AFRICA',
+    body:"Economy grew 1.1% in 2025 — strongest in 3 years. Inflation at 3.5% in January 2026 but petrol shock from Iran conflict threatens to push CPI beyond 4% by April. MPC expected to hold repo rate at 6.75%." },
+  { title:'USA',
+    body:"Nonfarm payrolls dropped 92,000 in February 2026. Unemployment rose to 4.4%. Fed rate cuts pushed back to September/December 2026. Energy price shock threatens to trigger a growth recession." },
+  { title:'EUROPE & UK',
+    body:"BCC cuts UK 2026 GDP forecast to 1.0%. Eurozone faces stagflation risk if Iran conflict prolongs. Construction and manufacturing sectors forecast to contract in 2026." },
+  { title:'CHINA & EMERGING MARKETS',
+    body:"China insulated by large energy stockpiles and renewables push. Emerging market equity price rally may be over as energy costs, inflation, and risk premiums rise sharply." },
+];
+
+var COL_HEADERS = ['1 Month','3 Months','YTD','1 Year','3 Years','5 Years','10 Years'];
+var marketRows = [
+  { desc:'FTSE/JSE All Property TR ZAR',        vals:['-1,00%','5,45%','11,85%','11,43%','23,84%','21,99%','1,70%'] },
+  { desc:'FTSE/JSE All Share TR ZAR',           vals:['6,61%','12,88%','31,73%','28,92%','23,42%','19,12%','11,70%'] },
+  { desc:'FTSE/JSE Financial 15 TR ZAR',        vals:['-1,65%','0,91%','6,93%','4,96%','21,75%','21,72%','7,98%'] },
+  { desc:'FTSE/JSE Ind/Technology TR ZAR',      vals:['8,23%','14,90%','51,55%','51,52%','40,36%','14,59%','3,07%'] },
+  { desc:'FTSE/JSE SA Industrials TR ZAR',      vals:['1,32%','3,69%','19,54%','19,83%','24,09%','16,65%','9,45%'] },
+  { desc:'FTSE/JSE SA Resources TR ZAR',        vals:['25,45%','46,80%','104,94%','86,45%','24,22%','20,77%','18,50%'] },
+  { desc:'FTSE/JSE Sec/Cnsmr Srvcs TR ZAR',     vals:['-2,69%','5,20%','-4,47%','-0,11%','20,72%','26,77%','6,72%'] },
+  { desc:'FTSE/JSE Top 40 TR ZAR',              vals:['7,85%','14,65%','37,23%','32,51%','24,67%','19,24%','12,04%'] },
+  { desc:'FTSE/JSE Sec/Pre Metals&Mini TR ZAR', vals:['32,88%','58,17%','181,86%','155,28%','44,53%','24,73%','25,56%'] },
+  { desc:'FTSE/JSE Indl 25 TR ZAR',            vals:['1,65%','4,16%','21,67%','21,04%','25,09%','16,53%','9,94%'] },
+  { desc:'FTSE/JSE Financials&Indl TR ZAR',     vals:['0,00%','2,55%','14,20%','13,77%','23,42%','18,07%','8,78%'] },
+  { desc:'FTSE/JSE SA Financials TR ZAR',       vals:['-1,74%','1,04%','7,55%','6,32%','21,49%','21,39%','7,17%'] },
+];
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function get(id){ var el=document.getElementById(id); return el ? el.value : ''; }
+function checked(id){ var el=document.getElementById(id); return el ? el.checked : false; }
+
+// ── BUILD ARTICLE FIELDS ──────────────────────────────────────────────────────
+function buildArticleFields() {
+  var c = document.getElementById('article-fields');
+  c.innerHTML = '';
+  for (var i = 0; i < articleSections.length; i++) {
+    (function(idx){
+      var hd = document.createElement('div');
+      hd.className = 'field-section-title';
+      if (idx === 0) hd.style.cssText = 'border-top:none;padding-top:0;';
+      hd.textContent = 'Section ' + (idx+1) + (articleSections[idx].heading ? ' — ' + articleSections[idx].heading : '');
+      c.appendChild(hd);
+
+      var card = document.createElement('div');
+      card.className = 'story-card';
+      card.innerHTML =
+        '<span class="story-field-label">Section Heading</span>' +
+        '<input type="text" id="as-hdg-' + idx + '" value="' + esc(articleSections[idx].heading) + '" placeholder="Leave blank to omit"/>' +
+        '<span class="story-field-label">Body Text</span>' +
+        '<textarea id="as-body-' + idx + '" rows="5">' + esc(articleSections[idx].body) + '</textarea>' +
+
+        // Image toggle row
+        '<div class="toggle-row" style="margin-top:10px;">' +
+          '<label class="toggle"><input type="checkbox" id="as-show-' + idx + '"' + (articleSections[idx].showImage ? ' checked' : '') + '/><span class="toggle-track"></span></label>' +
+          '<span>Show image after this section</span>' +
+        '</div>' +
+
+        // Image fields (hidden if toggle off)
+        '<div id="as-imgwrap-' + idx + '" style="' + (articleSections[idx].showImage ? '' : 'display:none;') + '">' +
+          '<span class="story-field-label">Image URL</span>' +
+          '<input type="text" id="as-img-' + idx + '" value="' + esc(articleSections[idx].imageUrl) + '" placeholder="https://... hosted image URL"/>' +
+          '<span class="story-field-label">Caption (optional)</span>' +
+          '<input type="text" id="as-cap-' + idx + '" value="' + esc(articleSections[idx].imageCaption) + '" placeholder="Caption below image"/>' +
+        '</div>';
+
+      c.appendChild(card);
+
+      card.querySelector('#as-hdg-' + idx).addEventListener('input', function(){ articleSections[idx].heading = this.value; scheduleRefresh(); });
+      card.querySelector('#as-body-' + idx).addEventListener('input', function(){ articleSections[idx].body = this.value; scheduleRefresh(); });
+      card.querySelector('#as-show-' + idx).addEventListener('change', function(){
+        articleSections[idx].showImage = this.checked;
+        document.getElementById('as-imgwrap-' + idx).style.display = this.checked ? 'block' : 'none';
+        scheduleRefresh();
+      });
+      card.querySelector('#as-img-' + idx).addEventListener('input', function(){ articleSections[idx].imageUrl = this.value; scheduleRefresh(); });
+      card.querySelector('#as-cap-' + idx).addEventListener('input', function(){ articleSections[idx].imageCaption = this.value; scheduleRefresh(); });
+    })(i);
+  }
+}
+
+// ── BUILD TOPIC FIELDS ────────────────────────────────────────────────────────
+function buildTopicFields() {
+  var c = document.getElementById('topic-fields');
+  c.innerHTML = '';
+  var hd = document.createElement('div');
+  hd.className = 'field-section-title';
+  hd.style.cssText = 'border-top:none;padding-top:0;';
+  hd.textContent = 'Key Topic Summary Cards (2 × 2 grid)';
+  c.appendChild(hd);
+  for (var i = 0; i < topicCards.length; i++) {
+    (function(idx){
+      var card = document.createElement('div');
+      card.className = 'story-card';
+      card.innerHTML =
+        '<div class="story-card-num">Card ' + (idx+1) + '</div>' +
+        '<span class="story-field-label">Title</span>' +
+        '<input type="text" id="tc-title-' + idx + '" value="' + esc(topicCards[idx].title) + '"/>' +
+        '<span class="story-field-label">Summary Text</span>' +
+        '<textarea id="tc-body-' + idx + '" rows="4">' + esc(topicCards[idx].body) + '</textarea>';
+      c.appendChild(card);
+      card.querySelector('#tc-title-' + idx).addEventListener('input', function(){ topicCards[idx].title = this.value; scheduleRefresh(); });
+      card.querySelector('#tc-body-' + idx).addEventListener('input', function(){ topicCards[idx].body  = this.value; scheduleRefresh(); });
+    })(i);
+  }
+}
+
+// ── BUILD MARKET FIELDS ───────────────────────────────────────────────────────
+function buildMarketFields() {
+  var c = document.getElementById('market-fields');
+  c.innerHTML = '';
+  var hd = document.createElement('div');
+  hd.className = 'field-section-title';
+  hd.style.cssText = 'border-top:none;padding-top:0;';
+  hd.textContent = 'Financial Market Indicators (ZAR)';
+  c.appendChild(hd);
+  for (var i = 0; i < marketRows.length; i++) {
+    (function(idx){
+      var row = document.createElement('div');
+      row.className = 'market-row';
+      var vHTML = '<div class="market-vals">';
+      for (var j = 0; j < COL_HEADERS.length; j++) {
+        vHTML += '<div class="market-val-item"><div class="market-val-label">' + COL_HEADERS[j] + '</div><input type="text" id="mv-' + idx + '-' + j + '" value="' + esc(marketRows[idx].vals[j]) + '"/></div>';
+      }
+      vHTML += '</div>';
+      row.innerHTML = '<div><input type="text" id="md-' + idx + '" value="' + esc(marketRows[idx].desc) + '"/></div>' + vHTML;
+      c.appendChild(row);
+      row.querySelector('#md-' + idx).addEventListener('input', function(){ marketRows[idx].desc = this.value; scheduleRefresh(); });
+      for (var k = 0; k < COL_HEADERS.length; k++) {
+        (function(jj){
+          row.querySelector('#mv-' + idx + '-' + jj).addEventListener('input', function(){ marketRows[idx].vals[jj] = this.value; scheduleRefresh(); });
+        })(k);
+      }
+    })(i);
+  }
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function showTab(name) {
+  ['header','article','topics','market'].forEach(function(t){
+    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+    document.getElementById('tab-' + t + '-btn').classList.toggle('active', t === name);
+  });
+}
+
+// ── GENERATE HTML ─────────────────────────────────────────────────────────────
+function generateHTML() {
+  var F     = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+  var NAVY  = '#163B4F';
+  var STEEL = '#455b70';
+  var DARK  = '#0e2d3e';
+  var LOGO  = 'https://mcusercontent.com/f4fec8259cbd66fbf9a376f71/images/5df544e3-6429-2b91-d514-e2dbfe435d7f.png';
+  var HERO  = 'https://mcusercontent.com/f4fec8259cbd66fbf9a376f71/images/3697ad12-084a-e716-cca4-c7c2ce3fb73c.png';
+  var LOGO_FOOTER = 'https://mcusercontent.com/f4fec8259cbd66fbf9a376f71/images/58e4ef22-e144-fb8f-254d-6da7aa44b99d.png';
+
+  var month      = get('h-month');
+  var newsHdg    = get('h-newsletter-heading') || 'NEWSLETTER';
+  var topicsHdg  = get('h-topics-heading') || 'KEY TOPICS THIS MONTH';
+  var slogan     = get('h-slogan');
+  var word1      = get('h-word1');
+  var word2      = get('h-word2');
+  var badge      = get('h-badge');
+  var authName   = get('h-author-name');
+  var authTitle  = get('h-author-title');
+  var authPhoto  = get('h-author-photo');
+
+  var IW = 632; // inner content width (680 - 24 - 24 padding)
+
+  // Dot grid
+  function dotGrid(bgCol, dotCol, rows, cols) {
+    var html = '';
+    for (var r = 0; r < rows; r++) {
+      html += '<tr>';
+      for (var cc = 0; cc < cols; cc++) {
+        html += '<td width="12" height="12" bgcolor="' + bgCol + '" style="width:12px;height:12px;background-color:' + bgCol + ';padding:3px;"><div style="width:5px;height:5px;border-radius:50%;background-color:' + dotCol + ';font-size:0;line-height:0;">&nbsp;</div></td>';
+      }
+      html += '</tr>';
+    }
+    return '<table cellpadding="0" cellspacing="1" border="0" bgcolor="' + bgCol + '" style="background-color:' + bgCol + ';">' + html + '</table>';
+  }
+
+  // Paragraphs — Outlook-safe: no bottom margin, spacer row separates paragraphs
+  function paraText(s) {
+    var paras = s.split(/\n\n+/).filter(function(p){ return p.trim(); });
+    return paras.map(function(p, i){
+      var spacer = (i < paras.length - 1)
+        ? '<tr><td height="12" bgcolor="#ffffff" style="height:12px;font-size:0;line-height:12px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>'
+        : '';
+      return '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0;">' +
+        '<p style="margin:0;font-size:12.5px;color:' + STEEL + ';line-height:1.75;font-family:' + F + ';text-align:justify;">' +
+        esc(p).replace(/\n/g,'<br/>') + '</p>' +
+        '</td></tr>' + spacer;
+    }).join('');
+  }
+
+  // Image block (full inner width)
+  function imgBlock(url, caption) {
+    if (!url || !url.trim()) return '';
+    return '<table width="' + IW + '" cellpadding="0" cellspacing="0" border="0" style="margin:14px 0;">' +
+      '<tr><td bgcolor="#f0f4f8" style="background-color:#f0f4f8;padding:0;font-size:0;">' +
+        '<img src="' + esc(url) + '" alt="' + esc(caption) + '" width="' + IW + '" style="display:block;width:' + IW + 'px;max-width:' + IW + 'px;height:auto;border:0;"/>' +
+      '</td></tr>' +
+      (caption.trim() ?
+        '<tr><td bgcolor="#dde3ea" style="background-color:#dde3ea;padding:6px 12px;font-family:' + F + ';font-size:10px;font-style:italic;color:' + STEEL + ';text-align:center;">' + esc(caption) + '</td></tr>' : '') +
+    '</table>';
+  }
+
+  // ── Article sections HTML ────────────────────────────────────────────────────
+  var articleHTML = '';
+  for (var si = 0; si < articleSections.length; si++) {
+    var s = articleSections[si];
+    if (!s.body.trim() && !s.heading.trim() && !s.imageUrl.trim()) continue;
+
+    if (si > 0) {
+      // Outlook-safe spacer ABOVE the line (space from bottom of paragraph)
+      articleHTML +=
+        '<tr><td height="16" bgcolor="#ffffff" style="height:16px;font-size:0;line-height:16px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
+        '<tr><td height="1" bgcolor="#dde3ea" style="height:1px;background-color:#dde3ea;font-size:0;line-height:1px;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
+        '<tr><td height="20" bgcolor="#ffffff" style="height:20px;font-size:0;line-height:20px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>';
+    }
+
+    if (s.heading.trim()) {
+      articleHTML +=
+        '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0 0 10px;">' +
+          '<table cellpadding="0" cellspacing="0" border="0" width="' + IW + '"><tr valign="middle">' +
+            '<td width="4" bgcolor="' + NAVY + '" style="width:4px;background-color:' + NAVY + ';font-size:0;padding:0;">&nbsp;</td>' +
+            '<td width="12" style="width:12px;font-size:0;padding:0;">&nbsp;</td>' +
+            '<td style="padding:2px 0;font-family:' + F + ';font-size:12px;font-weight:bold;color:' + NAVY + ';letter-spacing:2px;text-transform:uppercase;">' + esc(s.heading) + '</td>' +
+          '</tr></table>' +
+        '</td></tr>';
+    }
+
+    if (s.body.trim()) {
+      articleHTML += paraText(s.body);
+    }
+
+    if (s.showImage && s.imageUrl.trim()) {
+      articleHTML += '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0;">' + imgBlock(s.imageUrl, s.imageCaption) + '</td></tr>';
+    }
+  }
+
+  // ── Author block ──────────────────────────────────────────────────────────────
+  var authorHTML = authPhoto.trim()
+    ? '<table cellpadding="0" cellspacing="0" border="0" width="' + IW + '" style="margin-top:20px;border-top:2px solid #dde3ea;"><tr valign="middle">' +
+        '<td width="72" valign="middle" style="padding-top:14px;padding-right:14px;">' +
+          '<img src="' + esc(authPhoto) + '" alt="' + esc(authName) + '" width="62" height="62" style="display:block;width:62px;height:62px;border-radius:50%;border:2px solid ' + STEEL + ';"/>' +
+        '</td>' +
+        '<td valign="middle" style="padding-top:14px;">' +
+          '<p style="margin:0 0 3px;font-size:12px;font-weight:bold;color:' + NAVY + ';font-family:' + F + ';">' + esc(authName) + '</p>' +
+          '<p style="margin:0;font-size:10px;font-style:italic;color:' + STEEL + ';font-family:' + F + ';">' + esc(authTitle) + '</p>' +
+        '</td>' +
+      '</tr></table>'
+    : '<table cellpadding="0" cellspacing="0" border="0" width="' + IW + '" style="margin-top:20px;border-top:2px solid #dde3ea;"><tr>' +
+        '<td style="padding-top:12px;">' +
+          '<p style="margin:0 0 2px;font-size:12px;font-weight:bold;color:' + NAVY + ';font-family:' + F + ';">' + esc(authName) + '</p>' +
+          '<p style="margin:0;font-size:10px;font-style:italic;color:' + STEEL + ';font-family:' + F + ';">' + esc(authTitle) + '</p>' +
+        '</td>' +
+      '</tr></table>';
+
+  // ── Topic cards 2×2 grid ──────────────────────────────────────────────────────
+  // Card width: (632 - 20 gap) / 2 = 306px
+  var CW = 306, CGAP = 20;
+  var topicRows = '';
+  for (var ci = 0; ci < topicCards.length; ci += 2) {
+    var c1 = topicCards[ci];
+    var c2 = topicCards[ci + 1];
+    if (ci > 0) {
+      topicRows += '<tr><td colspan="3" height="16" bgcolor="#f5f8fb" style="height:16px;font-size:0;background-color:#f5f8fb;">&nbsp;</td></tr>';
+    }
+    topicRows += '<tr valign="top">';
+
+    // Card left
+    topicRows +=
+      '<td width="' + CW + '" valign="top" bgcolor="#ffffff" style="width:' + CW + 'px;background-color:#ffffff;border-top:3px solid ' + NAVY + ';padding:0;">' +
+        '<table width="' + CW + '" cellpadding="0" cellspacing="0" border="0">' +
+          '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:16px 16px 0;">' +
+            '<p style="margin:0;font-size:11px;font-weight:bold;color:' + NAVY + ';letter-spacing:2px;text-transform:uppercase;font-family:' + F + ';">' + esc(c1.title) + '</p>' +
+          '</td></tr>' +
+          '<tr><td height="8" bgcolor="#ffffff" style="height:8px;font-size:0;line-height:8px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
+          '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0 16px 16px;">' +
+            '<p style="margin:0;font-size:11.5px;color:' + STEEL + ';line-height:1.65;font-family:' + F + ';">' + esc(c1.body) + '</p>' +
+          '</td></tr>' +
+        '</table>' +
+      '</td>';
+
+    topicRows += '<td width="' + CGAP + '" bgcolor="#f5f8fb" style="width:' + CGAP + 'px;font-size:0;">&nbsp;</td>';
+
+    // Card right (may be empty if odd number)
+    if (c2) {
+      topicRows +=
+        '<td width="' + CW + '" valign="top" bgcolor="#ffffff" style="width:' + CW + 'px;background-color:#ffffff;border-top:3px solid ' + STEEL + ';padding:0;">' +
+          '<table width="' + CW + '" cellpadding="0" cellspacing="0" border="0">' +
+            '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:16px 16px 0;">' +
+              '<p style="margin:0;font-size:11px;font-weight:bold;color:' + NAVY + ';letter-spacing:2px;text-transform:uppercase;font-family:' + F + ';">' + esc(c2.title) + '</p>' +
+            '</td></tr>' +
+            '<tr><td height="8" bgcolor="#ffffff" style="height:8px;font-size:0;line-height:8px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
+            '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0 16px 16px;">' +
+              '<p style="margin:0;font-size:11.5px;color:' + STEEL + ';line-height:1.65;font-family:' + F + ';">' + esc(c2.body) + '</p>' +
+            '</td></tr>' +
+          '</table>' +
+        '</td>';
+    } else {
+      topicRows += '<td width="' + CW + '" bgcolor="#f5f8fb" style="width:' + CW + 'px;background-color:#f5f8fb;"></td>';
+    }
+    topicRows += '</tr>';
+  }
+
+  // ── Market table ──────────────────────────────────────────────────────────────
+  var DESC_W = 205, MKT_COL_W = 61;
+  var mktHdr =
+    '<tr bgcolor="' + NAVY + '">' +
+    '<td width="' + DESC_W + '" bgcolor="' + NAVY + '" style="background-color:' + NAVY + ';width:' + DESC_W + 'px;padding:9px 10px;font-family:' + F + ';font-size:11px;font-weight:bold;color:#ffffff;border-bottom:2px solid #7BAFC0;">Description</td>' +
+    COL_HEADERS.map(function(h){
+      return '<td width="' + MKT_COL_W + '" bgcolor="' + NAVY + '" style="background-color:' + NAVY + ';width:' + MKT_COL_W + 'px;padding:9px 4px;font-family:' + F + ';font-size:9px;font-weight:bold;color:#aabfd1;text-align:center;border-bottom:2px solid #7BAFC0;">' + h + '</td>';
+    }).join('') + '</tr>';
+
+  var mktData = '';
+  for (var ri = 0; ri < marketRows.length; ri++) {
+    var rbg = ri % 2 === 0 ? '#ffffff' : '#f0f4f8';
+    var mr  = marketRows[ri];
+    mktData += '<tr bgcolor="' + rbg + '">';
+    mktData += '<td width="' + DESC_W + '" bgcolor="' + rbg + '" style="background-color:' + rbg + ';width:' + DESC_W + 'px;padding:7px 10px;font-family:' + F + ';font-size:10px;font-weight:600;color:' + NAVY + ';border-bottom:1px solid #dde3ea;">' + esc(mr.desc) + '</td>';
+    for (var vi = 0; vi < mr.vals.length; vi++) {
+      var v  = mr.vals[vi];
+      var vc = v.indexOf('-') >= 0 ? '#c0392b' : (v==='0,00%'||v==='0%') ? '#888' : '#1a7a3a';
+      mktData += '<td width="' + MKT_COL_W + '" bgcolor="' + rbg + '" style="background-color:' + rbg + ';width:' + MKT_COL_W + 'px;padding:7px 4px;font-family:' + F + ';font-size:10px;font-weight:700;color:' + vc + ';text-align:center;border-bottom:1px solid #dde3ea;">' + esc(v) + '</td>';
+    }
+    mktData += '</tr>';
+  }
+
+  // ── ASSEMBLE ─────────────────────────────────────────────────────────────────
+  return [
+'<!DOCTYPE html>',
+'<html lang="en">',
+'<head>',
+'<meta charset="UTF-8"/>',
+'<meta name="viewport" content="width=device-width,initial-scale=1.0"/>',
+'<title>Monthly Insights ' + esc(month) + ' - Sequoia Investment Solutions</title>',
+'<!--[if mso]><style type="text/css">p{margin:0;mso-para-margin-top:0pt;mso-para-margin-bottom:0pt;}</style><![endif]-->',
+'<style>@media print{body{margin:0;padding:0;}@page{margin:0;size:A4 portrait;}tr{page-break-inside:avoid;}}</style>',
+'</head>',
+'<body style="margin:0;padding:0;background-color:#ffffff;">',
+'<table width="680" cellpadding="0" cellspacing="0" border="0" align="center" bgcolor="#ffffff" style="background-color:#ffffff;width:680px;max-width:680px;border-collapse:collapse;">',
+
+// ── ROW 1: LOGO STRIP with Issue Date ──
+'<tr bgcolor="#ffffff">',
+  '<td bgcolor="#ffffff" style="background-color:#ffffff;padding:14px 20px 10px;">',
+    '<table width="640" cellpadding="0" cellspacing="0" border="0"><tr valign="middle">',
+      '<td valign="middle">',
+        '<img src="' + LOGO + '" alt="Sequoia Investment Solutions" height="44" style="display:block;height:44px;max-width:220px;"/>',
+      '</td>',
+      '<td align="right" valign="middle" style="padding:0;">',
+        '<p style="margin:0;font-size:10px;font-weight:700;color:' + STEEL + ';letter-spacing:1.5px;text-transform:uppercase;font-family:' + F + ';white-space:nowrap;text-align:right;">Issue Date: ' + esc(month) + '</p>',
+      '</td>',
+    '</tr></table>',
+  '</td>',
+'</tr>',
+
+// ── ROW 2: HERO IMAGE ──
+'<tr bgcolor="' + DARK + '">',
+  '<td bgcolor="' + DARK + '" style="background-color:' + DARK + ';padding:0;font-size:0;line-height:0;">',
+    '<img src="' + HERO + '" alt="" width="680" style="display:block;width:680px;max-width:680px;height:auto;border:0;"/>',
+  '</td>',
+'</tr>',
+
+// ── ROW 3: NEWSLETTER TITLE ──
+'<tr bgcolor="' + DARK + '">',
+  '<td bgcolor="' + DARK + '" style="background-color:' + DARK + ';padding:28px 24px 18px;text-align:center;">',
+    '<p style="margin:0;font-size:56px;font-weight:900;color:#ffffff;line-height:1;font-family:' + F + ';letter-spacing:-2px;">' + esc(newsHdg) + '</p>',
+  '</td>',
+'</tr>',
+
+// ── ROW 5: TITLE (centred, no badge) ──
+'<tr bgcolor="#ffffff">',
+  '<td bgcolor="#ffffff" style="background-color:#ffffff;padding:28px 24px 0;text-align:center;">',
+    '<p style="margin:0;font-size:48px;font-weight:900;color:' + NAVY + ';line-height:1;font-family:' + F + ';letter-spacing:-1.5px;text-transform:uppercase;text-align:center;">' + esc(word1) + '</p>',
+  '</td>',
+'</tr>',
+
+// ── SPACER between badge and Key Topics ──
+'<tr bgcolor="#ffffff"><td height="20" bgcolor="#ffffff" style="height:20px;font-size:0;line-height:20px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>',
+
+// ── ROW 6: KEY TOPICS HEADER ──
+'<tr bgcolor="' + NAVY + '">',
+  '<td bgcolor="' + NAVY + '" style="background-color:' + NAVY + ';padding:16px 24px 14px;text-align:center;">',
+    '<p style="margin:0;font-size:20px;font-weight:900;color:#ffffff;line-height:1;font-family:' + F + ';letter-spacing:-0.5px;text-align:center;">' + esc(topicsHdg) + '</p>',
+  '</td>',
+'</tr>',
+
+// ── ROW 7: TOPIC CARDS 2×2 ──
+'<tr bgcolor="#f5f8fb">',
+  '<td bgcolor="#f5f8fb" style="background-color:#f5f8fb;padding:20px 24px 24px;">',
+    '<table width="' + IW + '" cellpadding="0" cellspacing="0" border="0" style="width:' + IW + 'px;">',
+      topicRows,
+    '</table>',
+  '</td>',
+'</tr>',
+
+// ── ROW 8: ARTICLE BODY ──
+'<tr bgcolor="#ffffff">',
+  '<td bgcolor="#ffffff" style="background-color:#ffffff;padding:28px 24px 8px;">',
+    '<table width="' + IW + '" cellpadding="0" cellspacing="0" border="0" style="width:' + IW + 'px;">',
+      articleHTML,
+    '</table>',
+    authorHTML,
+  '</td>',
+'</tr>',
+
+// ── ROW 9: MARKET HEADER ──
+'<tr bgcolor="' + STEEL + '">',
+  '<td bgcolor="' + STEEL + '" style="background-color:' + STEEL + ';padding:16px 24px 16px;text-align:center;">',
+    '<p style="margin:0;font-size:20px;font-weight:900;color:#ffffff;line-height:1;font-family:' + F + ';letter-spacing:-0.3px;text-align:center;">FINANCIAL MARKET INDICATORS <span style="color:#c8dde8;">(ZAR)</span></p>',
+  '</td>',
+'</tr>',
+
+// ── SPACER between market header and table ──
+'<tr bgcolor="#ffffff"><td height="14" bgcolor="#ffffff" style="height:14px;font-size:0;line-height:14px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>',
+
+// ── ROW 10: MARKET TABLE ──
+'<tr bgcolor="#ffffff">',
+  '<td bgcolor="#ffffff" style="background-color:#ffffff;padding:0 24px 28px;">',
+    '<table width="' + IW + '" cellpadding="0" cellspacing="0" border="0" style="width:' + IW + 'px;border-collapse:collapse;">',
+      mktHdr, mktData,
+    '</table>',
+  '</td>',
+'</tr>',
+
+// ── ROW 11: FOOTER ──
+'<tr bgcolor="#1C3D52">',
+  '<td bgcolor="#1C3D52" style="background-color:#1C3D52;padding:18px 48px;text-align:center;">',
+    '<table width="100%" cellpadding="0" cellspacing="0" border="0">',
+      '<tr bgcolor="#1C3D52"><td bgcolor="#1C3D52" align="center" style="background-color:#1C3D52;padding:0 0 16px;"><img src="' + LOGO_FOOTER + '" alt="Sequoia Investment Solutions" width="200" style="max-width:200px;width:100%;height:auto;display:block;margin:0 auto;"/></td></tr>',
+      '<tr bgcolor="#1C3D52"><td bgcolor="#1C3D52" align="center" style="background-color:#1C3D52;padding:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7BAFC0;">&copy; 2026 Sequoia Investment Solutions. All rights reserved.</td></tr>',
+      '<tr bgcolor="#1C3D52"><td bgcolor="#1C3D52" align="center" style="background-color:#1C3D52;padding:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#4A6D7C;">You are receiving this email because you are a valued client or partner of Sequoia Investment Solutions.</td></tr>',
+      '<tr bgcolor="#1C3D52"><td bgcolor="#1C3D52" align="center" style="background-color:#1C3D52;padding:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#4A6D7C;"><a href="*|UNSUB|*" style="color:#7BAFC0;text-decoration:underline;">Unsubscribe</a> &nbsp;|&nbsp; <a href="*|UPDATE_PROFILE|*" style="color:#7BAFC0;text-decoration:underline;">Update Preferences</a></td></tr>',
+      '<tr bgcolor="#1C3D52"><td bgcolor="#1C3D52" align="center" style="background-color:#1C3D52;padding:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#4A6D7C;">Sequoia Investment Solutions is an authorised Financial Service Provider, FSP 49393.</td></tr>',
+      '<tr bgcolor="#1C3D52"><td bgcolor="#1C3D52" align="center" style="background-color:#1C3D52;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;"><a href="https://www.sequoiainvest.co.za" style="color:#7BAFC0;text-decoration:underline;font-weight:500;letter-spacing:1px;">www.sequoiainvest.co.za</a></td></tr>',
+    '</table>',
+  '</td>',
+'</tr>',
+
+'</table>',
+'</body></html>'
+  ].join('\n');
+}
+
+// ── REFRESH ───────────────────────────────────────────────────────────────────
+var refreshTimer = null;
+function scheduleRefresh(){ clearTimeout(refreshTimer); refreshTimer = setTimeout(refreshPreview, 250); }
+function refreshPreview(){
+  var frame = document.getElementById('previewFrame');
+  var html  = generateHTML();
+  try{ var doc=frame.contentDocument||frame.contentWindow.document; doc.open(); doc.write(html); doc.close(); }
+  catch(e){ frame.srcdoc=html; }
+}
+
+function copyHTML(){
+  var html=generateHTML(), btn=document.getElementById('copyBtn');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(html).then(function(){
+      btn.textContent='✅ Copied! Now paste into Mailchimp'; btn.classList.add('ok');
+      setTimeout(function(){ btn.textContent='📋 Copy HTML for Mailchimp'; btn.classList.remove('ok'); },3000);
+    });
+  } else {
+    var ta=document.createElement('textarea'); ta.value=html; ta.style.cssText='position:fixed;opacity:0;';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    btn.textContent='✅ Copied!'; btn.classList.add('ok');
+    setTimeout(function(){ btn.textContent='📋 Copy HTML for Mailchimp'; btn.classList.remove('ok'); },3000);
+  }
+}
+function printAsPDF(){
+  var win=window.open('','_blank');
+  win.document.open(); win.document.write(generateHTML()); win.document.close();
+  win.onload=function(){ setTimeout(function(){ win.print(); },400); };
+}
+function downloadHTML(){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([generateHTML()],{type:'text/html'}));
+  a.download='sequoia_monthly_insights.html'; a.click();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+buildArticleFields();
+buildTopicFields();
+buildMarketFields();
+['h-month','h-newsletter-heading','h-word1','h-topics-heading','h-author-name','h-author-title','h-author-photo'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('input', scheduleRefresh);
+});
+refreshPreview();
+</script>
+</body>
+</html>
