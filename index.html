@@ -390,16 +390,18 @@ function generateHTML() {
     }).join('');
   }
 
-  // Image block (full inner width)
+  // Image block — white background, spacer above, plain caption below
   function imgBlock(url, caption) {
     if (!url || !url.trim()) return '';
-    return '<table width="' + IW + '" cellpadding="0" cellspacing="0" border="0" style="margin:14px 0;">' +
-      '<tr><td bgcolor="#f0f4f8" style="background-color:#f0f4f8;padding:0;font-size:0;">' +
-        '<img src="' + esc(url) + '" alt="' + esc(caption) + '" width="' + IW + '" style="display:block;width:' + IW + 'px;max-width:' + IW + 'px;height:auto;border:0;"/>' +
+    return '<tr><td height="18" bgcolor="#ffffff" style="height:18px;font-size:0;line-height:18px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
+      '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0;font-size:0;border:1px solid #dde3ea;line-height:0;mso-border-alt:solid #dde3ea 1px;">' +
+        '<img src="' + esc(url) + '" alt="' + esc(caption) + '" width="' + IW + '" style="display:block;width:' + IW + 'px;max-width:' + IW + 'px;height:auto;border:0;outline:0;text-decoration:none;"/>' +
       '</td></tr>' +
       (caption.trim() ?
-        '<tr><td bgcolor="#dde3ea" style="background-color:#dde3ea;padding:6px 12px;font-family:' + F + ';font-size:10px;font-style:italic;color:' + STEEL + ';text-align:center;">' + esc(caption) + '</td></tr>' : '') +
-    '</table>';
+        '<tr><td height="6" bgcolor="#ffffff" style="height:6px;font-size:0;line-height:6px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
+        '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0;font-family:' + F + ';font-size:10px;font-style:italic;color:' + STEEL + ';text-align:center;border:0;">' + esc(caption) + '</td></tr>'
+      : '') +
+      '<tr><td height="10" bgcolor="#ffffff" style="height:10px;font-size:0;line-height:10px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>';
   }
 
   // ── Article sections HTML ────────────────────────────────────────────────────
@@ -432,23 +434,31 @@ function generateHTML() {
     }
 
     if (s.showImage && s.imageUrl.trim()) {
-      articleHTML += '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0;">' + imgBlock(s.imageUrl, s.imageCaption) + '</td></tr>';
+      articleHTML += imgBlock(s.imageUrl, s.imageCaption);
     }
   }
 
   // ── Author block ──────────────────────────────────────────────────────────────
+  var authorSpacer =
+    '<table cellpadding="0" cellspacing="0" border="0" width="' + IW + '">' +
+      '<tr><td height="20" bgcolor="#ffffff" style="height:20px;font-size:0;line-height:20px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
+      '<tr><td height="2" bgcolor="#dde3ea" style="height:2px;font-size:0;line-height:2px;background-color:#dde3ea;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
+      '<tr><td height="14" bgcolor="#ffffff" style="height:14px;font-size:0;line-height:14px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
+    '</table>';
   var authorHTML = authPhoto.trim()
-    ? '<table cellpadding="0" cellspacing="0" border="0" width="' + IW + '" style="margin-top:20px;border-top:2px solid #dde3ea;"><tr valign="middle">' +
-        '<td width="72" valign="middle" style="padding-top:14px;padding-right:14px;">' +
+    ? authorSpacer +
+      '<table cellpadding="0" cellspacing="0" border="0" width="' + IW + '"><tr valign="middle">' +
+        '<td width="72" valign="middle" style="padding-right:14px;">' +
           '<img src="' + esc(authPhoto) + '" alt="' + esc(authName) + '" width="62" height="62" style="display:block;width:62px;height:62px;border-radius:50%;border:2px solid ' + STEEL + ';"/>' +
         '</td>' +
-        '<td valign="middle" style="padding-top:14px;">' +
+        '<td valign="middle">' +
           '<p style="margin:0 0 3px;font-size:12px;font-weight:bold;color:' + NAVY + ';font-family:' + F + ';">' + esc(authName) + '</p>' +
           '<p style="margin:0;font-size:10px;font-style:italic;color:' + STEEL + ';font-family:' + F + ';">' + esc(authTitle) + '</p>' +
         '</td>' +
       '</tr></table>'
-    : '<table cellpadding="0" cellspacing="0" border="0" width="' + IW + '" style="margin-top:20px;border-top:2px solid #dde3ea;"><tr>' +
-        '<td style="padding-top:12px;">' +
+    : authorSpacer +
+      '<table cellpadding="0" cellspacing="0" border="0" width="' + IW + '"><tr>' +
+        '<td>' +
           '<p style="margin:0 0 2px;font-size:12px;font-weight:bold;color:' + NAVY + ';font-family:' + F + ';">' + esc(authName) + '</p>' +
           '<p style="margin:0;font-size:10px;font-style:italic;color:' + STEEL + ';font-family:' + F + ';">' + esc(authTitle) + '</p>' +
         '</td>' +
@@ -577,18 +587,27 @@ function generateHTML() {
 // ── SPACER between badge and Key Topics ──
 '<tr bgcolor="#ffffff"><td height="20" bgcolor="#ffffff" style="height:20px;font-size:0;line-height:20px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>',
 
-// ── ROW 6: KEY TOPICS HEADER ──
-'<tr bgcolor="' + NAVY + '">',
-  '<td bgcolor="' + NAVY + '" style="background-color:' + NAVY + ';padding:16px 24px 14px;text-align:center;">',
-    '<p style="margin:0;font-size:20px;font-weight:900;color:#ffffff;line-height:1;font-family:' + F + ';letter-spacing:-0.5px;text-align:center;">' + esc(topicsHdg) + '</p>',
-  '</td>',
-'</tr>',
+// ── ROW 6+7: KEY TOPICS HEADER + CARDS — wrapped in one td to kill Outlook gap ──
+'<tr bgcolor="#ffffff">',
+  '<td bgcolor="#ffffff" style="background-color:#ffffff;padding:0;border:0;outline:0;">',
+    '<table width="680" cellpadding="0" cellspacing="0" border="0" style="width:680px;border-collapse:collapse;">',
 
-// ── ROW 7: TOPIC CARDS 2×2 ──
-'<tr bgcolor="#f5f8fb">',
-  '<td bgcolor="#f5f8fb" style="background-color:#f5f8fb;padding:20px 24px 24px;">',
-    '<table width="' + IW + '" cellpadding="0" cellspacing="0" border="0" style="width:' + IW + 'px;">',
-      topicRows,
+      // Header
+      '<tr bgcolor="' + NAVY + '">',
+        '<td bgcolor="' + NAVY + '" style="background-color:' + NAVY + ';padding:16px 24px 14px;text-align:center;border:0;">',
+          '<p style="margin:0;font-size:20px;font-weight:900;color:#ffffff;line-height:1;font-family:' + F + ';letter-spacing:-0.5px;text-align:center;">' + esc(topicsHdg) + '</p>',
+        '</td>',
+      '</tr>',
+
+      // Cards — same outer table, no row gap possible
+      '<tr bgcolor="#f5f8fb">',
+        '<td bgcolor="#f5f8fb" style="background-color:#f5f8fb;padding:20px 24px 24px;border:0;">',
+          '<table width="' + IW + '" cellpadding="0" cellspacing="0" border="0" style="width:' + IW + 'px;">',
+            topicRows,
+          '</table>',
+        '</td>',
+      '</tr>',
+
     '</table>',
   '</td>',
 '</tr>',
@@ -603,21 +622,30 @@ function generateHTML() {
   '</td>',
 '</tr>',
 
-// ── ROW 9: MARKET HEADER ──
-'<tr bgcolor="' + STEEL + '">',
-  '<td bgcolor="' + STEEL + '" style="background-color:' + STEEL + ';padding:16px 24px 16px;text-align:center;">',
-    '<p style="margin:0;font-size:20px;font-weight:900;color:#ffffff;line-height:1;font-family:' + F + ';letter-spacing:-0.3px;text-align:center;">FINANCIAL MARKET INDICATORS <span style="color:#c8dde8;">(ZAR)</span></p>',
-  '</td>',
-'</tr>',
-
-// ── SPACER between market header and table ──
-'<tr bgcolor="#ffffff"><td height="14" bgcolor="#ffffff" style="height:14px;font-size:0;line-height:14px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>',
-
-// ── ROW 10: MARKET TABLE ──
+// ── ROW 9+10: MARKET HEADER + TABLE — wrapped in one td to kill Outlook gap line ──
 '<tr bgcolor="#ffffff">',
-  '<td bgcolor="#ffffff" style="background-color:#ffffff;padding:0 24px 28px;">',
-    '<table width="' + IW + '" cellpadding="0" cellspacing="0" border="0" style="width:' + IW + 'px;border-collapse:collapse;">',
-      mktHdr, mktData,
+  '<td bgcolor="#ffffff" style="background-color:#ffffff;padding:0;border:0;">',
+    '<table width="680" cellpadding="0" cellspacing="0" border="0" style="width:680px;border-collapse:collapse;">',
+
+      // Header
+      '<tr bgcolor="' + STEEL + '">',
+        '<td bgcolor="' + STEEL + '" style="background-color:' + STEEL + ';padding:16px 24px 16px;text-align:center;border:0;">',
+          '<p style="margin:0;font-size:20px;font-weight:900;color:#ffffff;line-height:1;font-family:' + F + ';letter-spacing:-0.3px;text-align:center;">FINANCIAL MARKET INDICATORS <span style="color:#c8dde8;">(ZAR)</span></p>',
+        '</td>',
+      '</tr>',
+
+      // Spacer between header and table
+      '<tr bgcolor="#ffffff"><td height="14" bgcolor="#ffffff" style="height:14px;font-size:0;line-height:14px;background-color:#ffffff;padding:0;border:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>',
+
+      // Market table
+      '<tr bgcolor="#ffffff">',
+        '<td bgcolor="#ffffff" style="background-color:#ffffff;padding:0 24px 28px;border:0;">',
+          '<table width="' + IW + '" cellpadding="0" cellspacing="0" border="0" style="width:' + IW + 'px;border-collapse:collapse;">',
+            mktHdr, mktData,
+          '</table>',
+        '</td>',
+      '</tr>',
+
     '</table>',
   '</td>',
 '</tr>',
