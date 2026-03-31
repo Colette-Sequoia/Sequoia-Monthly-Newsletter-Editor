@@ -76,6 +76,9 @@ textarea { resize:vertical; min-height:68px; }
 .btn-pdf:hover { background:#6d28d9; }
 .btn-dl { padding:10px 12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:12px; font-weight:600; border-radius:5px; cursor:pointer; }
 .btn-dl:hover { background:rgba(255,255,255,0.18); }
+.btn-compress { padding:10px 12px; background:#0e7490; border:none; color:#fff; font-size:11px; font-weight:600; border-radius:5px; cursor:pointer; white-space:nowrap; }
+.btn-compress:hover { background:#0c6680; }
+.btn-compress.working { background:#374151; cursor:wait; }
 
 .preview-panel { flex:1; overflow:auto; background:#dce3ec; display:flex; flex-direction:column; }
 .preview-bar { background:#fff; border-bottom:1px solid #e2e8f0; padding:8px 20px; display:flex; align-items:center; gap:8px; flex-shrink:0; font-size:12px; color:#64748b; }
@@ -148,6 +151,7 @@ textarea { resize:vertical; min-height:68px; }
     <div class="sidebar-actions">
       <button class="btn-copy" id="copyBtn" onclick="copyHTML()">📋 Copy HTML for Mailchimp</button>
       <button class="btn-pdf" onclick="printAsPDF()">🖨 Print as PDF</button>
+      <button class="btn-compress" id="compressBtn" onclick="downloadCompressedPDF()" title="Download compressed PDF (smaller file size)">⬇ PDF</button>
       <button class="btn-dl" onclick="downloadHTML()" title="Download .html">⬇</button>
     </div>
   </div>
@@ -170,27 +174,27 @@ var articleSections = [
   {
     heading: 'GLOBAL ECONOMIC GROWTH OUTLOOK',
     body: 'The global economy remains uncertain and becomes more jittery after the new black swan, namely the US and Israel attack on Iran on 28 February. A black swan is an unpredictable event that is beyond what is normally expected of a situation and has potentially severe consequences. Global financial markets took a serious knock within the first two weeks of the attack, as the Brent oil price shot up from $70 per barrel on 27 February to $104 on 12 March 2026.\n\nThe IMF warns that intensified US-Iran conflict threatens the global economic recovery, with rising energy prices potentially increasing global inflation by 40 basis points and reducing output by up to 0.2% for every 10% rise in oil prices. Prolonged conflict risks worsening inflation and hindering economic growth.',
-    showImage: false, imageUrl: '', imageCaption: ''
+    showImage: true, imageUrl: '', imageCaption: ''
   },
   {
     heading: 'SOUTH AFRICA',
     body: "South Africa's economy grew by 1.1% in 2025, marking its strongest expansion in three years following 0.5% growth in 2024. The growth was driven by agriculture, finance, and trade, though it fell short of projections and remains below the population growth rate. The economy recorded its fifth consecutive quarter of growth, expanding by 0.4% in Q4 2025.\n\nSouth Africa's annual consumer price inflation fell to 3.5% in January 2026, down from 3.6% in December 2025. However, the US-Israel/Iran conflict means petrol prices are likely to increase around 30% over the next two months, pushing inflation beyond 4.0% by April. The MPC is expected to keep its repo rate steady at 6.75% at its March 2026 meeting.",
-    showImage: false, imageUrl: '', imageCaption: 'South Africa GDP Growth'
+    showImage: true, imageUrl: '', imageCaption: 'South Africa GDP Growth'
   },
   {
     heading: 'USA',
     body: "The United States economy is now expected to expand by less than the 2.4% 2026 trend base case. Following the joint US-Israel attacks on Iran from 28 February 2026 and the subsequent effective closure of the Strait of Hormuz, the US economy faces significant headwinds: rising inflation, elevated energy prices, and increased market volatility.\n\nUS nonfarm payrolls unexpectedly dropped by 92,000 in February 2026 — the sharpest decline in four months — missing forecasts of a 59,000 gain. The unemployment rate ticked up to 4.4%. Federal Reserve rate cuts are now pushed back to September or December 2026.",
-    showImage: false, imageUrl: '', imageCaption: ''
+    showImage: true, imageUrl: '', imageCaption: ''
   },
   {
     heading: 'EUROPE AND THE UK',
     body: "Eurozone economic growth prospects face significant uncertainty following US-led attacks on Iran, with risks skewed toward higher inflation and slower growth. The British Chambers of Commerce (BCC) has cut its 2026 UK GDP growth forecast to 1.0%, down from 1.2%. The NIESR warns that if elevated energy prices persist, UK GDP growth could be reduced by a further 0.2 percentage points. Both construction and manufacturing sectors are forecast to contract in 2026.",
-    showImage: false, imageUrl: '', imageCaption: 'Eurozone Economic Outlook'
+    showImage: true, imageUrl: '', imageCaption: 'Eurozone Economic Outlook'
   },
   {
     heading: 'CHINA AND EMERGING MARKETS',
     body: "China's economic prospects following the Iran conflict are marked by significant energy price risks and logistical disruptions. The country is insulated by large stockpiles, increased renewable energy, and aggressive industrial tech investment. China may use this crisis to accelerate its energy transition and leverage high-tech exports.\n\nThe economic outlook for emerging economies is marked by heightened volatility. The immediate outlook is dominated by rising energy costs, inflationary pressure, and increased risk premiums. The bullish movement of emerging market equity prices may be over.",
-    showImage: false, imageUrl: '', imageCaption: 'Emerging Markets Outlook'
+    showImage: true, imageUrl: '', imageCaption: 'Emerging Markets Outlook'
   }
 ];
 
@@ -394,7 +398,7 @@ function generateHTML() {
   function imgBlock(url, caption) {
     if (!url || !url.trim()) return '';
     return '<tr><td height="18" bgcolor="#ffffff" style="height:18px;font-size:0;line-height:18px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
-      '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0;font-size:0;border:1px solid #dde3ea;line-height:0;mso-border-alt:solid #dde3ea 1px;">' +
+      '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0;font-size:0;border:1px solid #dde3ea;line-height:0;">' +
         '<img src="' + esc(url) + '" alt="' + esc(caption) + '" width="' + IW + '" style="display:block;width:' + IW + 'px;max-width:' + IW + 'px;height:auto;border:0;outline:0;text-decoration:none;"/>' +
       '</td></tr>' +
       (caption.trim() ?
@@ -681,22 +685,88 @@ function refreshPreview(){
 
 function copyHTML(){
   var html=generateHTML(), btn=document.getElementById('copyBtn');
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(html).then(function(){
-      btn.textContent='✅ Copied! Now paste into Mailchimp'; btn.classList.add('ok');
-      setTimeout(function(){ btn.textContent='📋 Copy HTML for Mailchimp'; btn.classList.remove('ok'); },3000);
-    });
-  } else {
-    var ta=document.createElement('textarea'); ta.value=html; ta.style.cssText='position:fixed;opacity:0;';
-    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-    btn.textContent='✅ Copied!'; btn.classList.add('ok');
-    setTimeout(function(){ btn.textContent='📋 Copy HTML for Mailchimp'; btn.classList.remove('ok'); },3000);
+  function markCopied(){ btn.textContent='✅ Copied! Now paste into Mailchimp'; btn.classList.add('ok'); setTimeout(function(){ btn.textContent='📋 Copy HTML for Mailchimp'; btn.classList.remove('ok'); },3000); }
+  // Always try textarea fallback first — works in iframes where clipboard API is blocked
+  var ta=document.createElement('textarea');
+  ta.value=html;
+  ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    var ok=document.execCommand('copy');
+    document.body.removeChild(ta);
+    if(ok){ markCopied(); }
+    else if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(html).then(markCopied);
+    }
+  } catch(e){
+    document.body.removeChild(ta);
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(html).then(markCopied); }
   }
 }
 function printAsPDF(){
   var win=window.open('','_blank');
   win.document.open(); win.document.write(generateHTML()); win.document.close();
   win.onload=function(){ setTimeout(function(){ win.print(); },400); };
+}
+
+function downloadCompressedPDF(){
+  var btn = document.getElementById('compressBtn');
+  btn.textContent = '⏳ Generating...';
+  btn.classList.add('working');
+
+  // Load html2pdf.js from CDN if not already loaded
+  function doGenerate() {
+    var html = generateHTML();
+
+    // Write into a hidden iframe so html2pdf can render it at exact width
+    var iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:680px;height:1px;border:0;';
+    document.body.appendChild(iframe);
+    var doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+
+    // Give images time to load then generate PDF
+    setTimeout(function(){
+      var element = doc.body;
+      var month = document.getElementById('h-month') ? document.getElementById('h-month').value : 'newsletter';
+      var filename = 'Sequoia_Monthly_Insights_' + month.replace(/\s+/g,'_') + '.pdf';
+
+      html2pdf().set({
+        margin:        0,
+        filename:      filename,
+        image:         { type: 'jpeg', quality: 0.82 },
+        html2canvas:   { scale: 1.8, useCORS: true, allowTaint: true, width: 680, windowWidth: 680 },
+        jsPDF:         { unit: 'px', format: [680, 1600], orientation: 'portrait', hotfixes: ['px_scaling'] },
+        pagebreak:     { mode: 'avoid-all' }
+      }).from(element).save().then(function(){
+        document.body.removeChild(iframe);
+        btn.textContent = '✅ PDF Saved!';
+        btn.classList.remove('working');
+        setTimeout(function(){ btn.textContent = '⬇ PDF'; }, 3000);
+      }).catch(function(err){
+        document.body.removeChild(iframe);
+        btn.textContent = '⬇ PDF';
+        btn.classList.remove('working');
+        alert('PDF generation failed: ' + err);
+      });
+    }, 1500);
+  }
+
+  if (typeof html2pdf !== 'undefined') {
+    doGenerate();
+  } else {
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    script.onload = doGenerate;
+    script.onerror = function(){
+      btn.textContent = '⬇ PDF';
+      btn.classList.remove('working');
+      alert('Could not load PDF library. Please check your internet connection.');
+    };
+    document.head.appendChild(script);
+  }
 }
 function downloadHTML(){
   var a=document.createElement('a');
