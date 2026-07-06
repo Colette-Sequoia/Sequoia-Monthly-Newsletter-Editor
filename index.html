@@ -76,9 +76,6 @@ textarea { resize:vertical; min-height:68px; }
 .btn-pdf:hover { background:#6d28d9; }
 .btn-dl { padding:10px 12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:12px; font-weight:600; border-radius:5px; cursor:pointer; }
 .btn-dl:hover { background:rgba(255,255,255,0.18); }
-.btn-compress { padding:10px 12px; background:#0e7490; border:none; color:#fff; font-size:11px; font-weight:600; border-radius:5px; cursor:pointer; white-space:nowrap; }
-.btn-compress:hover { background:#0c6680; }
-.btn-compress.working { background:#374151; cursor:wait; }
 
 .preview-panel { flex:1; overflow:auto; background:#dce3ec; display:flex; flex-direction:column; }
 .preview-bar { background:#fff; border-bottom:1px solid #e2e8f0; padding:8px 20px; display:flex; align-items:center; gap:8px; flex-shrink:0; font-size:12px; color:#64748b; }
@@ -151,7 +148,6 @@ textarea { resize:vertical; min-height:68px; }
     <div class="sidebar-actions">
       <button class="btn-copy" id="copyBtn" onclick="copyHTML()">📋 Copy HTML for Mailchimp</button>
       <button class="btn-pdf" onclick="printAsPDF()">🖨 Print as PDF</button>
-      <button class="btn-compress" id="compressBtn" onclick="downloadCompressedPDF()" title="Download compressed PDF (smaller file size)">⬇ PDF</button>
       <button class="btn-dl" onclick="downloadHTML()" title="Download .html">⬇</button>
     </div>
   </div>
@@ -489,7 +485,7 @@ function generateHTML() {
           '</td></tr>' +
           '<tr><td height="8" bgcolor="#ffffff" style="height:8px;font-size:0;line-height:8px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
           '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0 16px 16px;">' +
-            '<p style="margin:0;font-size:11.5px;color:' + STEEL + ';line-height:1.65;font-family:' + F + ';">' + esc(c1.body) + '</p>' +
+            '<p style="margin:0;font-size:11.5px;color:' + STEEL + ';line-height:1.65;font-family:' + F + ';text-align:justify;">' + esc(c1.body) + '</p>' +
           '</td></tr>' +
         '</table>' +
       '</td>';
@@ -506,7 +502,7 @@ function generateHTML() {
             '</td></tr>' +
             '<tr><td height="8" bgcolor="#ffffff" style="height:8px;font-size:0;line-height:8px;background-color:#ffffff;padding:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>' +
             '<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:0 16px 16px;">' +
-              '<p style="margin:0;font-size:11.5px;color:' + STEEL + ';line-height:1.65;font-family:' + F + ';">' + esc(c2.body) + '</p>' +
+              '<p style="margin:0;font-size:11.5px;color:' + STEEL + ';line-height:1.65;font-family:' + F + ';text-align:justify;">' + esc(c2.body) + '</p>' +
             '</td></tr>' +
           '</table>' +
         '</td>';
@@ -711,63 +707,6 @@ function printAsPDF(){
   win.onload=function(){ setTimeout(function(){ win.print(); },400); };
 }
 
-function downloadCompressedPDF(){
-  var btn = document.getElementById('compressBtn');
-  btn.textContent = '⏳ Generating...';
-  btn.classList.add('working');
-
-  // Load html2pdf.js from CDN if not already loaded
-  function doGenerate() {
-    var html = generateHTML();
-
-    // Write into a hidden iframe so html2pdf can render it at exact width
-    var iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:680px;height:1px;border:0;';
-    document.body.appendChild(iframe);
-    var doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open(); doc.write(html); doc.close();
-
-    // Give images time to load then generate PDF
-    setTimeout(function(){
-      var element = doc.body;
-      var month = document.getElementById('h-month') ? document.getElementById('h-month').value : 'newsletter';
-      var filename = 'Sequoia_Monthly_Insights_' + month.replace(/\s+/g,'_') + '.pdf';
-
-      html2pdf().set({
-        margin:        0,
-        filename:      filename,
-        image:         { type: 'jpeg', quality: 0.82 },
-        html2canvas:   { scale: 1.8, useCORS: true, allowTaint: true, width: 680, windowWidth: 680 },
-        jsPDF:         { unit: 'px', format: [680, 1600], orientation: 'portrait', hotfixes: ['px_scaling'] },
-        pagebreak:     { mode: 'avoid-all' }
-      }).from(element).save().then(function(){
-        document.body.removeChild(iframe);
-        btn.textContent = '✅ PDF Saved!';
-        btn.classList.remove('working');
-        setTimeout(function(){ btn.textContent = '⬇ PDF'; }, 3000);
-      }).catch(function(err){
-        document.body.removeChild(iframe);
-        btn.textContent = '⬇ PDF';
-        btn.classList.remove('working');
-        alert('PDF generation failed: ' + err);
-      });
-    }, 1500);
-  }
-
-  if (typeof html2pdf !== 'undefined') {
-    doGenerate();
-  } else {
-    var script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    script.onload = doGenerate;
-    script.onerror = function(){
-      btn.textContent = '⬇ PDF';
-      btn.classList.remove('working');
-      alert('Could not load PDF library. Please check your internet connection.');
-    };
-    document.head.appendChild(script);
-  }
-}
 function downloadHTML(){
   var a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([generateHTML()],{type:'text/html'}));
